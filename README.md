@@ -44,6 +44,8 @@ ansible-deploy/
 │ │ └── tasks/main.yml
 │ └── Galaxy/
 │ └── tasks/main.yml
+└── UI/
+│ └── tasks/main.yml
 ```
 
 ---
@@ -126,11 +128,15 @@ Execute the playbook with:
 
 ```cd /ansible-deploy``` run from the root directory
 
-```ansible-playbook -i inventory/hosts.ini playbooks/deploy_server.yml   --tags UI_Local --ask-become-pass```
+```ansible-playbook -vvv -i inventory/hosts.ini playbooks/deploy_server.yml --tags UI_Local --ask-become-pass```
 
 #### to deplay only the Custom Atomspace Builder
 
 ```cd /ansible-deploy``` run from the root directory
+
+```ansible-playbook -vvv -i inventory/hosts.ini playbooks/deploy_server.yml --tags Custom_Atomspace_builder_Local --ask-become-pass```
+
+or
 
 ```ansible-playbook -i inventory/hosts.ini playbooks/deploy_server.yml   --tags Custom_Atomspace_builder_Local --ask-become-pass```
 
@@ -138,10 +144,19 @@ Execute the playbook with:
 
 ```cd /ansible-deploy``` run from the root directory
 
+```ansible-playbook -vvv -i inventory/hosts.ini playbooks/deploy_server.yml   --tags annotation_Local --ask-become-pass```
+
+or
+
 ```ansible-playbook -i inventory/hosts.ini playbooks/deploy_server.yml   --tags annotation_Local --ask-become-pass```
+
 
 #### to deplay all
 ```cd /ansible-deploy``` run from the root directory
+
+```ansible-playbook -vvv -i inventory/hosts.ini playbooks/deploy_server.yml   --tags UI_Local,annotation_Local,Custom_Atomspace_builder_Local --ask-become-pass```
+
+or
 
 ```ansible-playbook -i inventory/hosts.ini playbooks/deploy_server.yml   --tags UI_Local,annotation_Local,Custom_Atomspace_builder_Local --ask-become-pass```
 
@@ -167,6 +182,7 @@ Enter your sudo password when prompted (it might need the actual machine passwor
 -Update environment/config files for both services
 
 -Run the Ansible playbook
+
 
 
 
