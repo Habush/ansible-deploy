@@ -80,6 +80,7 @@ On your local machine, run:
 ### 3. Configure Inventory File (if you are using Local server ,skip this step.It is for remtoe server deployment)
 Edit the inventory file at inventory/hosts.ini:
 ```[Custom_Atomspace_builder]```
+
 ```your_server_ip ansible_user=your_username ansible_port=22 ansible_ssh_private_key_file=~/.ssh/id_rsa ansible_become=true ansible_become_method=sudo```
 Replace these placeholders:
 
@@ -98,6 +99,7 @@ For Custom Atomspace Builder:
 Edit these files in playbooks/roles/Custom_Atomspace_builder/templates/:
 
 ```custom-atomspace-builder.env```
+
 ```config.yaml.j2```
 
 ## For Annotation Service:
@@ -143,6 +145,7 @@ Enter your sudo password when prompted.
 
 #### to deplay on Remote server
 ```update  hosts.ini```
+
 ```ansible-playbook -i inventory/hosts.ini playbooks/deploy_server.yml   --tags UI_Remote,annotation_Remote,Custom_Atomspace_builder_Remote --ask-become-pass```
 
 Enter your sudo password when prompted (it might need the actual machine password).
@@ -157,5 +160,6 @@ Enter your sudo password when prompted (it might need the actual machine passwor
 -Update environment/config files for both services
 
 -Run the Ansible playbook
+
 
 
