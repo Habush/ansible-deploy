@@ -128,6 +128,10 @@ Execute the playbook with:
 
 ```cd /ansible-deploy``` run from the root directory
 
+```ansible-playbook -i inventory/hosts.ini playbooks/deploy_server.yml --tags UI_Local --ask-become-pass```
+
+or
+
 ```ansible-playbook -vvv -i inventory/hosts.ini playbooks/deploy_server.yml --tags UI_Local --ask-become-pass```
 
 #### to deplay only the Custom Atomspace Builder
@@ -182,6 +186,7 @@ Enter your sudo password when prompted (it might need the actual machine passwor
 -Update environment/config files for both services
 
 -Run the Ansible playbook
+
 
 
 
