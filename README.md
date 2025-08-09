@@ -70,18 +70,22 @@ If you haven't set up your remote server (where you want to deploy the applicati
 3. Create and copy SSH keys to the remote server:
 
 ```ssh-keygen -t rsa -b 4096```
+
 ```ssh-copy-id user@remote-server-ip```
 
 ### 2. Clone the Ansible Repository
 On your local machine, run:
 
 ```git clone https://github.com/Abdu1964/ansible-deploy_v2.0.git```
+
 ```cd ansible-deploy```
 ### 3. Configure Inventory File (if you are using Local server ,skip this step.It is for remtoe server deployment)
 Edit the inventory file at inventory/hosts.ini:
+
 ```[Custom_Atomspace_builder]```
 
-```your_server_ip ansible_user=your_username ansible_port=22 ansible_ssh_private_key_file=~/.ssh/id_rsa ansible_become=true ansible_become_method=sudo```
+```<ip address> ansible_user=<username> ansible_ssh_private_key_file=<ssh_key with full path>  ansible_become=true ansible_become_method=sudo ansible_become_pass=<password>```
+
 Replace these placeholders:
 
 - `your_server_ip` – Your server's IP address
@@ -160,6 +164,7 @@ Enter your sudo password when prompted (it might need the actual machine passwor
 -Update environment/config files for both services
 
 -Run the Ansible playbook
+
 
 
 
