@@ -148,7 +148,10 @@ Execute the playbook with:
 Enter your sudo password when prompted.
 
 #### to deplay on Remote server
-```update  hosts.ini```
+
+```update  inventory/hosts.ini```
+
+##### run form the root directory
 
 ```ansible-playbook -i inventory/hosts.ini playbooks/deploy_server.yml   --tags UI_Remote,annotation_Remote,Custom_Atomspace_builder_Remote --ask-become-pass```
 
@@ -164,6 +167,7 @@ Enter your sudo password when prompted (it might need the actual machine passwor
 -Update environment/config files for both services
 
 -Run the Ansible playbook
+
 
 
 
