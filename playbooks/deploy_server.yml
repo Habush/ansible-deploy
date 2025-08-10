@@ -20,7 +20,15 @@
   tags: annotation
   become: true
   roles:
-    - annotation
+    - Annotation
+
+- name: UI
+  hosts: UI
+  roles:
+    - UI
+  tags: UI
+  become: true
+
 #deploy_ai_assistant.yml
 - name: Deploy AI_Assistant Service
   hosts: AI_Assistant

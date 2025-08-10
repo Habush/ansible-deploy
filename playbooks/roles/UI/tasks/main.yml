@@ -1,4 +1,4 @@
-- name: Create fresh UI directory
+- name: Create UI project directory
   ansible.builtin.file:
     path: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui"
     state: directory
@@ -6,99 +6,67 @@
     owner: "{{ ansible_user_id | default(ansible_user) }}"
     group: "{{ ansible_user_id | default(ansible_user) }}"
 
-- name: Fix ownership of annotation-ui directory (correct path)
-  become: yes
-  ansible.builtin.file:
-    path: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui"
-    state: directory
-    recurse: yes
-    owner: "{{ ansible_user_id | default(ansible_user) }}"
-    group: "{{ ansible_user_id | default(ansible_user) }}"
-
-- name: Force clone UI repository (overwrite)
+- name: Clone UI repository
   ansible.builtin.git:
-    repo: "https://github.com/Abdu1964/annotation-tool.git"
+    repo: "https://github.com/rejuve-bio/annotation-tool.git"
     dest: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui"
     version: main
     force: yes
-    update: yes
 
-- name: Force overwrite .env file
+- name: Copy .env file to project directory
   ansible.builtin.copy:
     src: "templates/ui.env"
     dest: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui/.env"
     mode: '0644'
-    owner: "{{ ansible_user_id | default(ansible_user) }}"
-    group: "{{ ansible_user_id | default(ansible_user) }}"
-    force: yes
 
-- name: Nuke existing node_modules
-  ansible.builtin.file:
-    path: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui/node_modules"
+- name: Copy Dockerfile to project directory
+  ansible.builtin.copy:
+    src: "files/Dockerfile"
+    dest: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui/Dockerfile"
+    mode: '0644'
+
+- name: Ensure Docker service is running
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Stop and remove existing UI container
+  community.docker.docker_container:
+    name: annotation-ui
     state: absent
   ignore_errors: yes
 
-- name: Install Node.js and npm
-  ansible.builtin.apt:
-    name:
-      - nodejs
-      - npm
-    state: present
-    update_cache: yes
+- name: Build Docker image for UI
+  community.docker.docker_image:
+    name: annotation-ui:latest
+    build:
+      path: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui"
+    source: build
+    force_source: yes
+  register: build_result
 
-- name: Install dependencies (with sudo)
-  become: yes
-  become_user: "{{ ansible_user_id | default(ansible_user) }}"
-  ansible.builtin.shell: "npm install"
-  args:
-    chdir: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui"
+- name: Display build logs
+  ansible.builtin.debug:
+    var: build_result.stdout_lines
+  when: build_result.failed
 
-- name: Build application (with sudo but as user)
-  become: yes
-  become_user: "{{ ansible_user_id | default(ansible_user) }}"
-  ansible.builtin.shell: "npm run build"
-  args:
-    chdir: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui"
-    executable: /bin/bash
-  environment:
-    NODE_OPTIONS: "--openssl-legacy-provider"
-
-- name: Start UI application and capture correct URL (with sudo but as user)
-  become: yes
-  become_user: "{{ ansible_user_id | default(ansible_user) }}"
-  ansible.builtin.shell: |
-    # Start the app and capture the correct URL
-    npm start > /home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui/ui.log 2>&1 &
-    sleep 15
-    grep -E 'Server running on|Listening on|Application started|http://localhost|https://localhost' /home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui/ui.log | grep -v npmjs | tail -1 | awk '{print $NF}' > /tmp/app_url.txt
-    if [ ! -s /tmp/app_url.txt ]; then
-      ss -tulnp | grep node | awk '{print $5}' | awk -F: '{print $NF}' | head -1 > /tmp/app_url.txt
-      echo "http://localhost:$(cat /tmp/app_url.txt)" > /tmp/app_url.txt
-    fi
-  args:
-    chdir: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui"
-    executable: /bin/bash
-  environment:
-    NODE_ENV: production
-
-- name: Read captured URL
-  ansible.builtin.slurp:
-    src: /tmp/app_url.txt
-  register: app_url_file
-  changed_when: false
-
-- name: Set application URL
-  ansible.builtin.set_fact:
-    app_url: "{{ app_url_file.content | b64decode | trim | default('http://localhost:3000') }}"
-
-- name: Get all IPv4 addresses
-  ansible.builtin.command: "hostname -I"
-  register: ip_addresses
+- name: Run the UI Docker container
+  community.docker.docker_container:
+    name: annotation-ui
+    image: annotation-ui:latest
+    state: started
+    restart_policy: always
+    ports:
+      - "3000:3000" # Maps host port 3000 to container port 3000
+    env_file: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui/.env"
+    # extra_hosts:
+    #   host.docker.internal: host-gateway
 
 - name: Verify UI is running
   ansible.builtin.wait_for:
-    host: "{{ app_url.split('://')[1].split(':')[0] }}"
-    port: "{{ app_url.split(':')[-1] | regex_replace('/.*', '') | int }}"
+    host: 127.0.0.1
+    port: 3000
     delay: 10
     timeout: 60
     state: started
@@ -106,17 +74,6 @@
 - name: Display deployment information
   ansible.builtin.debug:
     msg: |
-      ✅ Annotation UI successfully deployed!
-      Installation directory: /home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui
-      Detected Application URL: {{ app_url }}
-      Alternative Access URLs:
-      {% for ip in ip_addresses.stdout.split() %}
-      - http://{{ ip }}:{{ app_url.split(':')[-1] | regex_replace('/.*', '') }}
-      {% endfor %}
-      Log file: /home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui/ui.log
-      To view live logs: tail -f /home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui/ui.log
-
-- name: Clean up temporary file
-  ansible.builtin.file:
-    path: /tmp/app_url.txt
-    state: absent
+      ✅ Annotation UI successfully deployed as a Docker container!
+      Application is running on http://localhost:3000
+      To view live logs: docker logs -f annotation-ui
