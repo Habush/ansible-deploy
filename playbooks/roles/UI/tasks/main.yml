@@ -10,7 +10,7 @@
   ansible.builtin.git:
     repo: "https://github.com/rejuve-bio/annotation-tool.git"
     dest: "/home/{{ ansible_user_id | default(ansible_user) }}/annotation-ui"
-    version: main
+    version: writer
     force: yes
 
 - name: Copy .env file to project directory
@@ -76,4 +76,5 @@
     msg: |
       ✅ Annotation UI successfully deployed as a Docker container!
       Application is running on http://localhost:3000
+
       To view live logs: docker logs -f annotation-ui
